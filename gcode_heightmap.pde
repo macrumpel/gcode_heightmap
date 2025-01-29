@@ -5,11 +5,9 @@ String outputFile = "output.gcode";
 
 float minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
 float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
-float newWidth, newHeight, padX, padY;
+float imgWidth, imgHeight;
 
 void setup() {
-  size(800, 800);  
-  surface.setResizable(true);
   img = loadImage("heightmap.png");
   gcodeLines = loadStrings(inputFile);
 
@@ -37,25 +35,26 @@ void setup() {
   println("X Min: " + minX + " | X Max: " + maxX);
   println("Y Min: " + minY + " | Y Max: " + maxY);
 
-  // Compute aspect ratios and fit
+  // Compute aspect ratios and fit image to canvas size while maintaining aspect ratio
   float gcodeAspect = (maxX - minX) / (maxY - minY);
   float imageAspect = float(img.width) / float(img.height);
-
+  println("G-code Aspect: " + gcodeAspect + ", Image Aspect: " + imageAspect);
+  // Scale image to fit the canvas while maintaining aspect ratio
   if (gcodeAspect > imageAspect) {
-    newWidth = img.width;
-    newHeight = img.width / gcodeAspect;
-    padX = 0;
-    padY = (img.height - newHeight) / 2;
+    imgWidth = img.width;  // Make the image fit the canvas width
+    imgHeight = img.height;
   } else {
-    newHeight = img.height;
-    newWidth = img.height * gcodeAspect;
-    padX = (img.width - newWidth) / 2;
-    padY = 0;
+    imgHeight = img.height;  // Make the image fit the canvas height
+    imgWidth = img.width;
   }
-surface.setSize(int(newWidth+padX),int(newHeight+padY));
-  // Print the adjusted dimensions for the image (to avoid distortion)
-  println("Adjusted Image Dimensions:");
-  println("Width: " + newWidth + " | Height: " + newHeight);
+
+  // Adjust canvas size based on image
+  surface.setSize(int(imgWidth), int(imgHeight));
+
+  println("Image Size: " + imgWidth + " x " + imgHeight);
+  println("Adjusted G-code Range:");
+  println("X Min: " + minX + " | X Max: " + maxX);
+  println("Y Min: " + minY + " | Y Max: " + maxY);
   
   println("Press 'S' to save modified G-code.");
 }
@@ -63,9 +62,9 @@ surface.setSize(int(newWidth+padX),int(newHeight+padY));
 // Draw preview
 void draw() {
   background(50);
-  
+
   // Draw the image scaled properly (without distortion)
-  image(img, 0, 0, width, height);  
+  image(img, 0, 0, imgWidth, imgHeight);
 
   // Now we draw the G-code path (green)
   drawGcodePath(color(0, 255, 0));  // Green path with adjusted Z for pen plotter
@@ -75,11 +74,10 @@ void draw() {
   text("Green: Adjusted G-code (Z controls pen pressure)", 10, height - 10);
 }
 
-
 // Function to draw G-code path with variable thickness
 void drawGcodePath(color strokeColor) {
   stroke(strokeColor);
-  
+
   float lastX = -1, lastY = -1;
 
   for (String line : gcodeLines) {
@@ -93,17 +91,19 @@ void drawGcodePath(color strokeColor) {
       }
 
       if (x >= 0 && y >= 0) {
-        int imgX = int(map(x, minX, maxX, padX, padX + newWidth - 1));
-        int imgY = int(map(y, minY, maxY, padY, padY + newHeight - 1));
-        imgY = img.height - 1 - imgY;  
+        // Map G-code coordinates to image coordinates
+        int imgX = int(map(x, minX, maxX, 0, imgWidth));
+        int imgY = int(map(y, minY, maxY, 0, imgHeight));
 
+        // Get brightness from the image at the mapped position
         float brightnessValue = brightness(img.get(imgX, imgY));
-        float newZ = map(brightnessValue, 0, 255, 0, 10);
-        float strokeW = map(newZ, 0, 10, 3, 0.5);  // Inverted: Higher Z = Thinner line
+        float newZ = map(brightnessValue, 0, 255, 0, 10);  // Map brightness to Z value
+        float strokeW = map(newZ, 0, 10, 3, 0.5);  // Higher Z = thinner line
 
         strokeWeight(strokeW);
 
         if (lastX >= 0 && lastY >= 0) {
+          // Draw the path line from the previous point to the current point
           line(lastX, lastY, imgX, imgY);
         }
         lastX = imgX;
@@ -136,13 +136,15 @@ void saveModifiedGCode() {
       }
 
       if (x >= 0 && y >= 0) {
-        int imgX = int(map(x, minX, maxX, padX, padX + newWidth - 1));
-        int imgY = int(map(y, minY, maxY, padY, padY + newHeight - 1));
-        imgY = img.height - 1 - imgY;
+        // Map G-code coordinates to image coordinates
+        int imgX = int(map(x, minX, maxX, 0, imgWidth));
+        int imgY = int(map(y, minY, maxY, 0, imgHeight));
 
+        // Get brightness value from image at the mapped point
         float brightnessValue = brightness(img.get(imgX, imgY));
-        float newZ = map(brightnessValue, 0, 255, 0, 10);
+        float newZ = map(brightnessValue, 0, 255, 0, 5);
 
+        // Save new line with modified Z
         String newLine = "G1 X" + x + " Y" + y + " Z" + nf(newZ, 0, 3);
         output.println(newLine);
       } else {
