@@ -9,10 +9,10 @@ float newWidth, newHeight, padX, padY;
 
 void setup() {
   size(800, 800);  
+  surface.setResizable(true);
   img = loadImage("heightmap.png");
   gcodeLines = loadStrings(inputFile);
-  surface.setResizable(true);
-    
+
   // Find G-code bounds
   for (String line : gcodeLines) {
     if (line.startsWith("G1") || line.startsWith("G0")) {
@@ -40,8 +40,6 @@ void setup() {
   // Compute aspect ratios and fit
   float gcodeAspect = (maxX - minX) / (maxY - minY);
   float imageAspect = float(img.width) / float(img.height);
-  println("gcode Aspect ratio = " + gcodeAspect );
-  println("image Aspect ratio = " + imageAspect);
 
   if (gcodeAspect > imageAspect) {
     newWidth = img.width;
@@ -54,23 +52,29 @@ void setup() {
     padX = (img.width - newWidth) / 2;
     padY = 0;
   }
-  println(newWidth + "," + newHeight);
 surface.setSize(int(newWidth+padX),int(newHeight+padY));
+  // Print the adjusted dimensions for the image (to avoid distortion)
+  println("Adjusted Image Dimensions:");
+  println("Width: " + newWidth + " | Height: " + newHeight);
+  
   println("Press 'S' to save modified G-code.");
 }
-
 
 // Draw preview
 void draw() {
   background(50);
+  
+  // Draw the image scaled properly (without distortion)
   image(img, 0, 0, width, height);  
 
+  // Now we draw the G-code path (green)
   drawGcodePath(color(0, 255, 0));  // Green path with adjusted Z for pen plotter
 
   fill(255);
   textSize(14);
   text("Green: Adjusted G-code (Z controls pen pressure)", 10, height - 10);
 }
+
 
 // Function to draw G-code path with variable thickness
 void drawGcodePath(color strokeColor) {
