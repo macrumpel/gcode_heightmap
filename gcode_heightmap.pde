@@ -72,27 +72,27 @@ void setup() {
   // Initialize ControlP5 GUI
   cp5 = new ControlP5(this);
   cp5.addSlider("zMin")
-     .setPosition(10, 10)
+     .setPosition(10, 30)
      .setRange(0, 10)
      .setValue(0)
      .setLabel("Z Min");
   cp5.addSlider("zMax")
-     .setPosition(10, 30)
+     .setPosition(10, 60)
      .setRange(0, 10)
      .setValue(10)
      .setLabel("Z Max");
   cp5.addSlider("strokeMin")
-     .setPosition(10, 50)
+     .setPosition(10, 90)
      .setRange(0.1, 5)
      .setValue(0.5)
      .setLabel("Stroke Min");
   cp5.addSlider("strokeMax")
-     .setPosition(10, 70)
+     .setPosition(10, 120)
      .setRange(0.1, 5)
      .setValue(3)
      .setLabel("Stroke Max");
   cp5.addSlider("brightnessThreshold")
-     .setPosition(10, 90)
+     .setPosition(10, 150)
      .setRange(0, 255)
      .setValue(128)
      .setLabel("Brightness Threshold");
@@ -106,6 +106,11 @@ void draw() {
 
   // Draw the scaled image
   image(img, 0, 0, imgWidth, imgHeight);
+
+  // Draw a dark transparent box behind the GUI
+  fill(0, 150);  // Black with 150/255 transparency
+  noStroke();
+  rect(5, 25, 200, 140);  // Adjust size and position as needed
 
   // Draw the G-code path with adjusted Z for pen plotter
   drawGcodePath(color(255, 255, 0));  // Yellow path
@@ -133,7 +138,7 @@ void drawGcodePath(color strokeColor) {
   float lastX = -1, lastY = -1;
 
   for (String line : gcodeLines) {
-    if (line.startsWith("G1") || line.startsWith("G0")) {
+    if (line.startsWith("G1")) {
       String[] parts = line.split(" ");
       float x = -1, y = -1;
 
@@ -166,6 +171,23 @@ void drawGcodePath(color strokeColor) {
           // Draw the path line from the previous point to the current point
           line(lastX, lastY, imgX, imgY);
         }
+        lastX = imgX;
+        lastY = imgY;
+      }
+    }
+    else if (line.startsWith("G0")) {
+        String[] parts = line.split(" ");
+      float x = -1, y = -1;
+
+      for (String part : parts) {
+        if (part.startsWith("X")) x = float(part.substring(1));
+        if (part.startsWith("Y")) y = float(part.substring(1));
+      }
+
+      if (x >= 0 && y >= 0) {
+        // Map G-code coordinates to image coordinates
+        int imgX = int(map(x, minX, maxX, 0, imgWidth));
+        int imgY = int(map(y, minY, maxY, 0, imgHeight));
         lastX = imgX;
         lastY = imgY;
       }
