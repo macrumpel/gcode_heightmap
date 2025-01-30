@@ -110,6 +110,16 @@ void draw() {
   // Draw the G-code path with adjusted Z for pen plotter
   drawGcodePath(color(255, 255, 0));  // Yellow path
 
+  // Display Z value when hovering over the image
+  if (mouseX >= 0 && mouseX < imgWidth && mouseY >= 0 && mouseY < imgHeight) {
+    float brightnessValue = brightness(img.get(mouseX, mouseY));
+    float zValue = map(brightnessValue, 0, 255, zMin, zMax);
+
+    fill(255);
+    textSize(14);
+    text("Z Value: " + nf(zValue, 0, 2), mouseX + 10, mouseY - 10);
+  }
+
   // Display GUI text
   fill(255);
   textSize(14);
