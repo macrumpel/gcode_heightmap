@@ -1,13 +1,22 @@
+import controlP5.*;
+
 PImage img;
 String[] gcodeLines;
-String inputFile = "input.gcode";  
+String inputFile = "input.gcode";
 String outputFile = "output.gcode";
 
 float minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
 float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
 float imgWidth, imgHeight;
 
+// ControlP5 GUI
+ControlP5 cp5;
+float zMin = 0, zMax = 10;  // Z-axis mapping range
+float strokeMin = 0.5, strokeMax = 3;  // Stroke weight range
+float brightnessThreshold = 128;  // Brightness threshold
+
 void setup() {
+  size(800, 600);  // Default canvas size
   img = loadImage("heightmap.png");
   gcodeLines = loadStrings(inputFile);
 
@@ -35,27 +44,59 @@ void setup() {
   println("X Min: " + minX + " | X Max: " + maxX);
   println("Y Min: " + minY + " | Y Max: " + maxY);
 
-  // Compute aspect ratios and fit image to canvas size while maintaining aspect ratio
+  // Compute aspect ratios and scale image to fit canvas while maintaining aspect ratio
   float gcodeAspect = (maxX - minX) / (maxY - minY);
   float imageAspect = float(img.width) / float(img.height);
-  println("G-code Aspect: " + gcodeAspect + ", Image Aspect: " + imageAspect);
-  // Scale image to fit the canvas while maintaining aspect ratio
+
   if (gcodeAspect > imageAspect) {
-    imgWidth = img.width;  // Make the image fit the canvas width
-    imgHeight = img.height;
+    // Fit to width
+    imgWidth = width;
+    imgHeight = imgWidth / imageAspect;
   } else {
-    imgHeight = img.height;  // Make the image fit the canvas height
-    imgWidth = img.width;
+    // Fit to height
+    imgHeight = height;
+    imgWidth = imgHeight * imageAspect;
   }
 
-  // Adjust canvas size based on image
+  // Resize the image to fit the canvas
+  img.resize(int(imgWidth), int(imgHeight));
+
+  // Adjust canvas size based on scaled image
   surface.setSize(int(imgWidth), int(imgHeight));
 
   println("Image Size: " + imgWidth + " x " + imgHeight);
   println("Adjusted G-code Range:");
   println("X Min: " + minX + " | X Max: " + maxX);
   println("Y Min: " + minY + " | Y Max: " + maxY);
-  
+
+  // Initialize ControlP5 GUI
+  cp5 = new ControlP5(this);
+  cp5.addSlider("zMin")
+     .setPosition(10, 10)
+     .setRange(0, 10)
+     .setValue(0)
+     .setLabel("Z Min");
+  cp5.addSlider("zMax")
+     .setPosition(10, 30)
+     .setRange(0, 10)
+     .setValue(10)
+     .setLabel("Z Max");
+  cp5.addSlider("strokeMin")
+     .setPosition(10, 50)
+     .setRange(0.1, 5)
+     .setValue(0.5)
+     .setLabel("Stroke Min");
+  cp5.addSlider("strokeMax")
+     .setPosition(10, 70)
+     .setRange(0.1, 5)
+     .setValue(3)
+     .setLabel("Stroke Max");
+  cp5.addSlider("brightnessThreshold")
+     .setPosition(10, 90)
+     .setRange(0, 255)
+     .setValue(128)
+     .setLabel("Brightness Threshold");
+
   println("Press 'S' to save modified G-code.");
 }
 
@@ -63,12 +104,13 @@ void setup() {
 void draw() {
   background(50);
 
-  // Draw the image scaled properly (without distortion)
+  // Draw the scaled image
   image(img, 0, 0, imgWidth, imgHeight);
 
-  // Now we draw the G-code path (green)
-  drawGcodePath(color(255, 255, 0));  // Green path with adjusted Z for pen plotter
+  // Draw the G-code path with adjusted Z for pen plotter
+  drawGcodePath(color(255, 255, 0));  // Yellow path
 
+  // Display GUI text
   fill(255);
   textSize(14);
   text("Green: Adjusted G-code (Z controls pen pressure)", 10, height - 10);
@@ -97,8 +139,16 @@ void drawGcodePath(color strokeColor) {
 
         // Get brightness from the image at the mapped position
         float brightnessValue = brightness(img.get(imgX, imgY));
-        float newZ = map(brightnessValue, 0, 255, 0, 10);  // Map brightness to Z value
-        float strokeW = map(newZ, 0, 10, 3, 0.5);  // Higher Z = thinner line
+
+        // Apply brightness threshold
+        if (brightnessValue < brightnessThreshold) {
+          brightnessValue = 0;  // Treat as dark
+        } else {
+          brightnessValue = 255;  // Treat as bright
+        }
+
+        float newZ = map(brightnessValue, 0, 255, zMin, zMax);  // Use GUI-adjusted Z range
+        float strokeW = map(newZ, zMin, zMax, strokeMax, strokeMin);  // Use GUI-adjusted stroke range
 
         strokeWeight(strokeW);
 
@@ -142,7 +192,15 @@ void saveModifiedGCode() {
 
         // Get brightness value from image at the mapped point
         float brightnessValue = brightness(img.get(imgX, imgY));
-        float newZ = map(brightnessValue, 0, 255, 0, 5);
+
+        // Apply brightness threshold
+        if (brightnessValue < brightnessThreshold) {
+          brightnessValue = 0;  // Treat as dark
+        } else {
+          brightnessValue = 255;  // Treat as bright
+        }
+
+        float newZ = map(brightnessValue, 0, 255, zMin, zMax);  // Use GUI-adjusted Z range
 
         // Save new line with modified Z
         String newLine = "G1 X" + x + " Y" + y + " Z" + nf(newZ, 0, 3);
