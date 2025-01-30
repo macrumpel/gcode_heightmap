@@ -87,7 +87,7 @@ if (gcodeLines == null) {
   cp5.addSlider("zMax")
      .setPosition(10, 60)
      .setRange(0, 10)
-     .setValue(10)
+     .setValue(5)
      .setLabel("Z Max");
   cp5.addSlider("strokeMin")
      .setPosition(10, 90)
@@ -229,6 +229,7 @@ void saveModifiedGCode() {
         // Map G-code coordinates to image coordinates
         int imgX = int(map(x, minX, maxX, 0, imgWidth));
         int imgY = int(map(y, minY, maxY, 0, imgHeight));
+        imgY = img.height - imgY;  // Flip Y to match coordinate systems
 
         // Get brightness value from image at the mapped point
         float brightnessValue = brightness(img.get(imgX, imgY));
