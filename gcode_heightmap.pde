@@ -67,7 +67,7 @@ void draw() {
   image(img, 0, 0, imgWidth, imgHeight);
 
   // Now we draw the G-code path (green)
-  drawGcodePath(color(0, 255, 0));  // Green path with adjusted Z for pen plotter
+  drawGcodePath(color(255, 255, 0));  // Green path with adjusted Z for pen plotter
 
   fill(255);
   textSize(14);
