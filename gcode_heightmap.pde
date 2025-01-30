@@ -14,12 +14,13 @@ ControlP5 cp5;
 float zMin = 0, zMax = 10;  // Z-axis mapping range
 float strokeMin = 0.5, strokeMax = 3;  // Stroke weight range
 float brightnessThreshold = 128;  // Brightness threshold
+float imageFade = 255;  // Image opacity (0 = fully transparent, 255 = fully opaque)
 
 void setup() {
   size(800, 600);  // Default canvas size
   img = loadImage("heightmap.png");
   gcodeLines = loadStrings(inputFile);
-  // error handling
+// error handling
   if (img == null) {
   println("Error: Could not load image.");
   exit();
@@ -104,6 +105,11 @@ if (gcodeLines == null) {
      .setRange(0, 255)
      .setValue(128)
      .setLabel("Brightness Threshold");
+  cp5.addSlider("imageFade")
+     .setPosition(10, 180)
+     .setRange(0, 255)
+     .setValue(255)
+     .setLabel("Image Fade");
 
   println("Press 'S' to save modified G-code.");
 }
@@ -112,13 +118,15 @@ if (gcodeLines == null) {
 void draw() {
   background(50);
 
-  // Draw the scaled image
+  // Draw the scaled image with fade control
+  tint(255, imageFade);  // Apply transparency to the image
   image(img, 0, 0, imgWidth, imgHeight);
+  noTint();  // Reset tint for other elements
 
   // Draw a dark transparent box behind the GUI
   fill(0, 150);  // Black with 150/255 transparency
   noStroke();
-  rect(5, 25, 200, 140);  // Adjust size and position as needed
+  rect(5, 25, 200, 170);  // Adjust size and position as needed
 
   // Draw the G-code path with adjusted Z for pen plotter
   drawGcodePath(color(255, 255, 0));  // Yellow path
@@ -182,9 +190,8 @@ void drawGcodePath(color strokeColor) {
         lastX = imgX;
         lastY = imgY;
       }
-    }
-    else if (line.startsWith("G0")) {
-        String[] parts = line.split(" ");
+    } else if (line.startsWith("G0")) {
+      String[] parts = line.split(" ");
       float x = -1, y = -1;
 
       for (String part : parts) {
@@ -229,7 +236,7 @@ void saveModifiedGCode() {
         // Map G-code coordinates to image coordinates
         int imgX = int(map(x, minX, maxX, 0, imgWidth));
         int imgY = int(map(y, minY, maxY, 0, imgHeight));
-        imgY = img.height - imgY;  // Flip Y to match coordinate systems
+imgY = img.height - imgY;  // Flip Y to match coordinate systems
 
         // Get brightness value from image at the mapped point
         float brightnessValue = brightness(img.get(imgX, imgY));
