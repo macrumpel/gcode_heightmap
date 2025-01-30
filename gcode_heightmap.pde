@@ -19,7 +19,15 @@ void setup() {
   size(800, 600);  // Default canvas size
   img = loadImage("heightmap.png");
   gcodeLines = loadStrings(inputFile);
-
+  // error handling
+  if (img == null) {
+  println("Error: Could not load image.");
+  exit();
+}
+if (gcodeLines == null) {
+  println("Error: Could not load G-code file.");
+  exit();
+}
   // Find G-code bounds
   for (String line : gcodeLines) {
     if (line.startsWith("G1") || line.startsWith("G0")) {
