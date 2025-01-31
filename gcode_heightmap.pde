@@ -3,7 +3,7 @@ import controlP5.*;
 PImage img;
 String[] gcodeLines;
 String inputFile = "input.gcode";
-String outputFile = "output.gcode";
+String outputFile = "gcode_out/output[heightmapped]_" + hour() + minute() + "-" + day() + month() + year() + ".gcode";
 
 float minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
 float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
@@ -136,7 +136,7 @@ void draw() {
     float brightnessValue = brightness(img.get(mouseX, mouseY));
     float zValue = map(brightnessValue, 0, 255, zMin, zMax);
 
-    fill(255);
+    fill(0);
     textSize(14);
     text("Z Value: " + nf(zValue, 0, 2), mouseX + 10, mouseY - 10);
   }
