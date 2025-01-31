@@ -211,57 +211,80 @@ void setup() {
                                                                         }
                                                                             
                                                                             // Save G-code when 'S' is pressed
-                                                                       void keyPressed() {
+void keyPressed() {
                                                                          if (key == 'S' || key == 's') {
                                                                                     saveModifiedGCode();
                                                                                 }
                                                                                 }
                                                                                     
                                                                                    // Function to save modified G - code
-                                                                              void saveModifiedGCode() {
-                                                                                       PrintWriter output = createWriter(outputFile);
-                                                                                        
-                                                                                  for (String line : gcodeLines) {
-                                                                                       if (line.startsWith("G1") || line.startsWith("G0")) {
-                                                                                               String[] parts = line.split(" ");
-                                                                                                float x = -1, y = - 1, z = -1;
-                                                                                                
-                                                                                           for (String part : parts) {
-                                                                                                    if (part.startsWith("X")) x = float(part.substring(1));
-                                                                                                    if (part.startsWith("Y")) y = float(part.substring(1));
-                                                                                                    if (part.startsWith("Z")) z = float(part.substring(1));
-                                                                                            }
-                                                                                                    
-                                                                                             if (x >= 0 && y >= 0) {
-                                                                                                       // Map G-code coordinates to image coordinates
-                                                                                                      int imgX = int(map(x, minX, maxX, 0, imgWidth));
-                                                                                                      int imgY = int(map(y, minY, maxY, 0, imgHeight));
-                                                                                                     imgY = img.height - imgY;  // Flip Y to match coordinate systems
-                                                                                                        
-                                                                                                      // Get brightness value from image at the mapped point
-                                                                                                       float brightnessValue = brightness(img.get(imgX, imgY));
-                                                                                                        
-                                                                                                       // Apply brightness threshold
-                                                                                                    if (brightnessValue < brightnessThreshold) {
-                                                                                                           brightnessValue = 0;  // Treat as dark
-                                                                                                    } else {
-                                                                                                         brightnessValue = 255;  // Treat as bright
-                                                                                                        }
-                                                                                                            
-                                                                                                          float newZ = map(brightnessValue, 0, 255, zMin, zMax);  // Use GUI-adjusted Z range
-                                                                                                            
-                                                                                                           // Save new line with modified Z
-                                                                                                       String newLine = "G1 X" + x + " Y" + y + " Z" + nf(newZ, 0, 3);
-                                                                                                            output.println(newLine);
-                                                                                               } else {
-                                                                                                            output.println(line);
-                                                                                                    }
-                                                                                                    } else {
-                                                                                                            output.println(line);
-                                                                                                        }
-                                                                                                        }
-                                                                                                            
-                                                                                                            output.flush();
-                                                                                                            output.close();
-                                                                                                           println("Modified G-code saved to " + outputFile);
-                                                                                                        }
+                                  void saveModifiedGCode() {
+                                            PrintWriter output = createWriter(outputFile);
+                                            
+                                      for (String line : gcodeLines) {
+                                            if (line.startsWith("G1")) {
+                                                    String[] parts = line.split(" ");
+                                                    float x = -1, y = - 1, z = -1;
+                                                    
+                                                for (String part : parts) {
+                                                        if (part.startsWith("X")) x = float(part.substring(1));
+                                                        if (part.startsWith("Y")) y = float(part.substring(1));
+                                                        if (part.startsWith("Z")) z = float(part.substring(1));
+                                                }
+                                                        
+                                                  if (x >= 0 && y >= 0) {
+                                                            // Map G-code coordinates to image coordinates
+                                                          int imgX = int(map(x, minX, maxX, 0, imgWidth));
+                                                          int imgY = int(map(y, minY, maxY, 0, imgHeight));
+                                                          imgY = img.height - imgY;  // Flip Y to match coordinate systems
+                                                            
+                                                          // Get brightness value from image at the mapped point
+                                                            float brightnessValue = brightness(img.get(imgX, imgY));
+                                                            
+                                                            // Apply brightness threshold
+                                                        if (brightnessValue < brightnessThreshold) {
+                                                                brightnessValue = 0;  // Treat as dark
+                                                        } else {
+                                                              brightnessValue = 255;  // Treat as bright
+                                                            }
+                                                                
+                                                              float newZ = map(brightnessValue, 0, 255, zMin, zMax);  // Use GUI-adjusted Z range
+                                                                
+                                                                // Save new line with modified Z
+                                                            String newLine = "G1 X" + x + " Y" + y + " Z" + nf(newZ, 0, 3);
+                                                                output.println(newLine);
+                                                    } else if (line.startsWith("G1 Z0")) {
+                                                        // just remove the lines which place the pen on the paper only
+                                                    }else {
+                                                                output.println(line);
+                                                        }
+                                                        } else if (line.startsWith("G0")) {
+                                                              String[] parts = line.split(" ");
+                                                    float x = -1, y = - 1, z = -1;
+                                                    
+                                                for (String part : parts) {
+                                                        if (part.startsWith("X")) x = float(part.substring(1));
+                                                        if (part.startsWith("Y")) y = float(part.substring(1));
+                                                        if (part.startsWith("Z")) z = float(part.substring(1));
+                                                }
+                                                        
+                                                  if (x >= 0 && y >= 0) {
+                                                            // Map G-code coordinates to image coordinates
+                                                          int imgX = int(map(x, minX, maxX, 0, imgWidth));
+                                                          int imgY = int(map(y, minY, maxY, 0, imgHeight));
+                                                          imgY = img.height - imgY;  // Flip Y to match coordinate systems
+                                                            String newLine = "G0 X" + x + " Y" + y + " Z8";
+                                                                output.println(newLine);
+                                                    } else {
+                                                                //output.println(line);
+                                                        }
+                                                          
+                                                        } else {
+                                                                output.println(line);
+                                                            }
+                                                            }
+                                                                
+                                                                output.flush();
+                                                                output.close();
+                                                                println("Modified G-code saved to " + outputFile);
+                                                            }
