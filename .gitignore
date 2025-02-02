@@ -1,2 +1,5 @@
 gcode_heightmap.app
 gcode_out/
+gcode_in/
+.DS_Store
+
