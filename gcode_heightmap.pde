@@ -124,7 +124,7 @@ void setup() {
 
 // Draw preview
 void draw() {
-  background(50);
+  background(255);
 
   // Draw the scaled image with fade control
   tint(255, imageFade);  // Apply transparency to the image
@@ -150,9 +150,9 @@ void draw() {
   }
 
   // Display GUI text
-  fill(255);
+  fill(0);
   textSize(14);
-  text("Green: Adjusted G-code (Z controls pen pressure)", 10, height - 10);
+  text("Yellow: Adjusted G-code (Z controls pen pressure)", 10, height - 10);
 }
 
 // Function to draw G-code path with variable thickness
@@ -260,7 +260,7 @@ void saveModifiedGCode() {
 
         // Get brightness value from image at the mapped point
         float brightnessValue = brightness(img.get(imgX, imgY));
-
+        float absolute_brightnessValue = brightnessValue; // not modified by threshold
         // Apply brightness threshold
         if (brightnessValue < brightnessThreshold) {
           brightnessValue = 0;  // Treat as dark
@@ -270,7 +270,7 @@ void saveModifiedGCode() {
 
         // If "Ignore White" is enabled and pixel is white, raise Z above zMax
         float newZ;
-        if (ignoreWhite && brightnessValue == 255) {
+        if (ignoreWhite && absolute_brightnessValue == 255) {
           newZ = zMax + 2;  // Raise Z by 2 points above zMax
         } else {
           newZ = map(brightnessValue, 0, 255, zMin, zMax);  // Use GUI-adjusted Z range
