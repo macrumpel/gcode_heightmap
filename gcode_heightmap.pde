@@ -152,7 +152,7 @@ void draw() {
   // Display GUI text
   fill(0);
   textSize(14);
-  text("Yellow: Adjusted G-code (Z controls pen pressure)", 10, height - 10);
+  text("Yellow: Adjusted G-code (Z controls pen height)", 10, height - 10);
 }
 
 // Function to draw G-code path with variable thickness
@@ -240,7 +240,8 @@ void keyPressed() {
 // Function to save modified G-code
 void saveModifiedGCode() {
   PrintWriter output = createWriter(outputFile);
-
+  output.println("(GCODE modified by processing for z height adjustements)");
+  output.println("(Please set pen to touch the paper at Z="+ zMax + ")");
   for (String line : gcodeLines) {
     if (line.startsWith("G1")) {
       String[] parts = line.split(" ");
