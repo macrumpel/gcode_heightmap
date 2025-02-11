@@ -2,4 +2,9 @@ gcode_heightmap.app
 gcode_out/
 gcode_in/
 .DS_Store
+*.jpg
+*.png
+*.gcode
+!heightmap.png
+!input.gcode
 

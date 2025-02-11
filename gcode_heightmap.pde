@@ -234,6 +234,18 @@ void drawGcodePath(color strokeColor) {
 void keyPressed() {
   if (key == 'S' || key == 's') {
     saveModifiedGCode();
+  } else if (key == 'I' || key == 'i') {
+    imageFade = 0;
+    cp5.getController("imageFade").setValue(0);
+  }
+  else if (key == CODED) {
+    if (keyCode == LEFT){
+      brightnessThreshold = int(brightnessThreshold*0.90);
+      cp5.getController("brightnessThreshold").setValue(brightnessThreshold); 
+    } else if (keyCode == RIGHT) {
+      brightnessThreshold = int(brightnessThreshold * 1.1);
+      cp5.getController("brightnessThreshold").setValue(brightnessThreshold); 
+    }
   }
 }
 
